@@ -37,7 +37,7 @@ jobs:
             exit 1
           fi
 
-      # ── Import Apple Developer Certificate ──────────────────────────────
+      # ── Import Apple Developer Certificate ────────────────────────────
       - name: Import Apple certificate
         run: |
           KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
@@ -52,7 +52,6 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple:,codesign: \
             -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
-          # Derive the actual signing identity from the imported cert
           CERT_ID=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" \
             | grep "Developer ID Application" \
             | head -1 \
@@ -63,27 +62,26 @@ jobs:
             exit 1
           fi
           echo "CERT_ID=${CERT_ID}" >> $GITHUB_ENV
-          echo "Keychain path: ${KEYCHAIN_PATH}"
 
-      # ── Checkout ────────────────────────────────────────────────────────
+      # ── Checkout ──────────────────────────────────────────────────────
       - uses: actions/checkout@v4
 
-      # ── Setup Node ─────────────────────────────────────────────────────
+      # ── Setup Node ────────────────────────────────────────────────────
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: "npm"
 
-      # ── Setup Rust ─────────────────────────────────────────────────────
+      # ── Setup Rust ────────────────────────────────────────────────────
       - name: Setup Rust
         uses: dtolnay/rust-action@stable
 
-      # ── Install frontend dependencies ──────────────────────────────────
+      # ── Install dependencies ───────────────────────────────────────────
       - name: Install dependencies
         run: npm ci
 
-      # ── Build, Sign, Notarize, and Package via tauri-action ───────────
+      # ── Build, sign, notarize, and package via tauri-action ───────────
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v1
         env:
@@ -100,16 +98,15 @@ jobs:
             Nausilus is a lightweight macOS desktop companion featuring a gently pulsing jellyfish animation.
 
             ## Downloads
-            Download the .dmg below, then open it and drag Nausilus.app to your Applications folder.
+            Download the .dmg below, open it, and drag Nausilus.app to your Applications folder.
             On first launch macOS may ask you to confirm — click Open.
           releaseDraft: false
           prerelease: false
           artifactPatterns: |
             *.dmg
 
-      # ── Find and verify the produced DMG ─────────────────────────────
+      # ── Verify produced DMG ────────────────────────────────────────────
       - name: Locate DMG
-        id: dmg
         run: |
           DMG=$(find src-tauri/target/*/release/bundle/dmg -name "*.dmg" 2>/dev/null | head -1)
           if [[ -z "$DMG" ]]; then
@@ -121,7 +118,6 @@ jobs:
           echo "Found: ${DMG}"
           ls -lh "${DMG}"
 
-      # Mount DMG and verify the app bundle signature
       - name: Verify signature and notarization
         run: |
           hdiutil attach "${{ env.DMG_PATH }}" \
