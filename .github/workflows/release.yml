@@ -10,183 +10,124 @@ permissions:
   id-token: write
 
 env:
-  # These must be set in repo Secrets and Variables:
-  # APPLE_ID         — Apple developer email (variables)
-  # APPLE_TEAM_ID     — Team ID e.g. ABC1234567 (variables)
-  # APPLE_SIGNING_IDENTITY — "Developer ID Application: Name (TEAM_ID)" (variables or secrets)
-  # APPLE_PASSWORD    — App-specific Apple ID password (secrets — never exposed)
-  APPLE_SIGNING_IDENTITY: "${{ vars.APPLE_SIGNING_IDENTITY }}"
-  APPLE_ID: "${{ vars.APPLE_ID }}"
-  APPLE_TEAM_ID: "${{ vars.APPLE_TEAM_ID }}"
-  APPLE_PASSWORD: "${{ secrets.APPLE_PASSWORD }}"
+  APPLE_ID: ${{ secrets.APPLE_ID }}
+  APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+  APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+  APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+  APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+  KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
 
 jobs:
-  # Step 1: Build unsigned app bundles for both architectures
-  build:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: "arm64"
-            target: "aarch64-apple-darwin"
-          - arch: "x64"
-            target: "x86_64-apple-darwin"
-
+  release:
     runs-on: macos-latest
     steps:
+      # ── Fail fast if Apple credentials are absent ──────────────────────
+      - name: Verify Apple signing credentials
+        run: |
+          missing=()
+          [[ -z "$APPLE_CERTIFICATE"          ]] && missing+=("APPLE_CERTIFICATE")
+          [[ -z "$APPLE_CERTIFICATE_PASSWORD" ]] && missing+=("APPLE_CERTIFICATE_PASSWORD")
+          [[ -z "$KEYCHAIN_PASSWORD"          ]] && missing+=("KEYCHAIN_PASSWORD")
+          [[ -z "$APPLE_ID"                   ]] && missing+=("APPLE_ID")
+          [[ -z "$APPLE_PASSWORD"             ]] && missing+=("APPLE_PASSWORD")
+          [[ -z "$APPLE_TEAM_ID"              ]] && missing+=("APPLE_TEAM_ID")
+          if [[ ${#missing[@]} -gt 0 ]]; then
+            echo "ERROR: Missing required secrets: ${missing[*]}"
+            echo "Set these at: https://github.com/TheCountOfSaintGermain/nausilus/settings/secrets/actions"
+            exit 1
+          fi
+
+      # ── Import Apple Developer Certificate ──────────────────────────────
+      - name: Import Apple certificate
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          echo -n "$APPLE_CERTIFICATE" | base64 --decode -o /tmp/certificate.p12
+          security import /tmp/certificate.p12 -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Derive the actual signing identity from the imported cert
+          CERT_ID=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" \
+            | grep "Developer ID Application" \
+            | head -1 \
+            | sed 's/.*"\(.*\)"/\1/')
+          if [[ -z "$CERT_ID" ]]; then
+            echo "ERROR: No Developer ID Application certificate found after import."
+            security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+            exit 1
+          fi
+          echo "CERT_ID=${CERT_ID}" >> $GITHUB_ENV
+          echo "Keychain path: ${KEYCHAIN_PATH}"
+
+      # ── Checkout ────────────────────────────────────────────────────────
       - uses: actions/checkout@v4
 
+      # ── Setup Node ─────────────────────────────────────────────────────
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: "npm"
 
+      # ── Setup Rust ─────────────────────────────────────────────────────
       - name: Setup Rust
         uses: dtolnay/rust-action@stable
-        with:
-          targets: ${{ matrix.target }}
 
-      - name: Install frontend dependencies
+      # ── Install frontend dependencies ──────────────────────────────────
+      - name: Install dependencies
         run: npm ci
 
-      - name: Build (unsigned)
-        run: |
-          npx tauri build \
-            --target ${{ matrix.target }} \
-            --no-sign
+      # ── Build, Sign, Notarize, and Package via tauri-action ───────────
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v1
         env:
-          APPLE_SIGNING_IDENTITY: ""
-
-      - name: Locate bundle
-        run: |
-          APP_PATH="src-tauri/target/${{ matrix.target }}/release/bundle/macos"
-          ls -la "${APP_PATH}/"
-
-      - name: Upload unsigned app bundle
-        uses: actions/upload-artifact@v4
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_SIGNING_IDENTITY: ${{ env.CERT_ID }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
         with:
-          name: nausilus-${{ matrix.arch }}-unsigned
-          path: |
-            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app
-          retention-days: 1
-
-  # Step 2: Sign, notarize, and staple each architecture
-  sign-and-notarize:
-    needs: build
-    runs-on: macos-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: "arm64"
-          - arch: "x64"
-
-    steps:
-      - name: Download unsigned bundle
-        uses: actions/download-artifact@v4
-        with:
-          name: nausilus-${{ matrix.arch }}-unsigned
-          path: /tmp/nausilus-app
-
-      - name: Codesign (Developer ID)
-        if: vars.APPLE_SIGNING_IDENTITY != ''
-        run: |
-          ls /tmp/nausilus-app/
-          codesign --force --deep --sign "${{ env.APPLE_SIGNING_IDENTITY }}" /tmp/nausilus-app/*.app
-
-      - name: Verify signature
-        if: vars.APPLE_SIGNING_IDENTITY != ''
-        run: |
-          codesign --verify --deep --strict /tmp/nausilus-app/*.app
-          spctl -a -vvv -t exec /tmp/nausilus-app/*.app
-
-      - name: Notarize
-        if: vars.APPLE_SIGNING_IDENTITY != ''
-        run: |
-          xcrun notarytool submit /tmp/nausilus-app/*.app \
-            --apple-id "${{ env.APPLE_ID }}" \
-            --password "${{ env.APPLE_PASSWORD }}" \
-            --team-id "${{ env.APPLE_TEAM_ID }}" \
-            --wait
-
-      - name: Staple
-        if: vars.APPLE_SIGNING_IDENTITY != ''
-        run: |
-          xcrun stapler validate /tmp/nausilus-app/*.app
-
-      - name: Create DMG
-        run: |
-          hdiutil create \
-            -volname Nausilus \
-            -srcfolder /tmp/nausilus-app \
-            -ov \
-            -type UDIF \
-            -quiet \
-            "/tmp/Nausilus_${{ matrix.arch }}.dmg"
-
-      - name: Upload signed artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: nausilus-${{ matrix.arch }}-signed
-          path: "/tmp/Nausilus_${{ matrix.arch }}.dmg"
-
-  # Step 3: Create GitHub Release and attach DMGs
-  create-release:
-    needs: sign-and-notarize
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download all DMGs
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
-      - name: List artifacts
-        run: find artifacts -type f | sort
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: "Nausilus ${{ github.ref_name }}"
-          draft: false
-          prerelease: false
-          generate_release_notes: false
-          body: |
+          tagName: ${{ github.ref_name }}
+          releaseName: "Nausilus ${{ github.ref_name }}"
+          releaseBody: |
             Nausilus is a lightweight macOS desktop companion featuring a gently pulsing jellyfish animation.
 
             ## Downloads
-            - **Nausilus_arm64.dmg** — Apple Silicon Macs (M1/M2/M3/M4)
-            - **Nausilus_x64.dmg** — Intel Macs
+            Download the .dmg below, then open it and drag Nausilus.app to your Applications folder.
+            On first launch macOS may ask you to confirm — click Open.
+          releaseDraft: false
+          prerelease: false
+          artifactPatterns: |
+            *.dmg
 
-            ## Install
-            1. Download the .dmg for your Mac type
-            2. Open the DMG
-            3. Drag Nausilus.app to your Applications folder
-            4. On first launch, macOS may ask you to confirm — click Open
-
-            Both architectures are provided as separate downloads for maximum compatibility.
-          files: |
-            artifacts/nausilus-arm64-signed/*.dmg
-            artifacts/nausilus-x64-signed/*.dmg
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  # Step 4: Report if signing credentials were missing
-  # This job runs only when APPLE_SIGNING_IDENTITY was empty/not configured
-  credential-check:
-    needs: sign-and-notarize
-    runs-on: ubuntu-latest
-    # Only run if no signed artifacts were produced
-    # This is informational — the workflow will fail gracefully
-    steps:
-      - name: Check if signing was applied
+      # ── Find and verify the produced DMG ─────────────────────────────
+      - name: Locate DMG
+        id: dmg
         run: |
-          if [[ -z "${{ vars.APPLE_SIGNING_IDENTITY }}" ]]; then
-            echo "⚠️ APPLE_SIGNING_IDENTITY is not configured."
-            echo "⚠️ The artifacts are unsigned and will be rejected by Gatekeeper."
-            echo "⚠️ To fix: Set APPLE_SIGNING_IDENTITY, APPLE_ID, APPLE_TEAM_ID in repo Variables"
-            echo "⚠️          and APPLE_PASSWORD in repo Secrets."
+          DMG=$(find src-tauri/target/*/release/bundle/dmg -name "*.dmg" 2>/dev/null | head -1)
+          if [[ -z "$DMG" ]]; then
+            echo "ERROR: No .dmg found in bundle output"
+            ls -la src-tauri/target/*/release/bundle/ 2>/dev/null || true
             exit 1
           fi
-        shell: bash
+          echo "DMG_PATH=${DMG}" >> $GITHUB_ENV
+          echo "Found: ${DMG}"
+          ls -lh "${DMG}"
+
+      # Mount DMG and verify the app bundle signature
+      - name: Verify signature and notarization
+        run: |
+          hdiutil attach "${{ env.DMG_PATH }}" \
+            -mountpoint /tmp/nausilus-verify -nobrowse -quiet
+          APP_BUNDLE=$(find /tmp/nausilus-verify -name "*.app" -type d | head -1)
+          echo "Verifying bundle: ${APP_BUNDLE}"
+          codesign --verify --deep --strict --verbose=4 "${APP_BUNDLE}"
+          spctl -a -vvv -t exec "${APP_BUNDLE}"
+          xcrun stapler validate "${APP_BUNDLE}"
+          hdiutil detach /tmp/nausilus-verify -quiet
