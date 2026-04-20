@@ -92,6 +92,7 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          TARGET: universal-apple-darwin
         with:
           tagName: ${{ github.ref_name }}
           releaseName: "Nausilus ${{ github.ref_name }}"
