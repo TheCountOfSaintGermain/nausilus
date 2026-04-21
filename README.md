@@ -6,7 +6,9 @@
 >
 > This is the current working Mac tester build for trusted users.
 > It is unsigned and not notarized.
-> If macOS blocks it with a damaged warning, move the app to /Applications and run:
+> **If macOS blocks it**
+>
+> After unzipping, move `Nausilus.app` to your Applications folder, then run:
 >
 >     xattr -dr com.apple.quarantine "/Applications/Nausilus.app"
 
