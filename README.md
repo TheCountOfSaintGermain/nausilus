@@ -6,20 +6,32 @@
 >
 > This is the current working Mac tester build for trusted users.
 > It is unsigned and not notarized.
-> **If macOS blocks it**
->
-> After unzipping, move `Nausilus.app` to your Applications folder, then run:
->
->     xattr -dr com.apple.quarantine "/Applications/Nausilus.app"
 
-## Download & Getting Started
+## Install on macOS
 
-**macOS (pre-built):**
-1. Download the latest `.app` bundle from the Releases section
-2. Drag `Nausilus.app` into your Applications folder
-3. Double-click to launch
+1. Download `Nausilus_tester_0.0.2_aarch64.app.zip`
+2. Open **Terminal**
+3. Run this exact block:
 
-**First Launch:** On first launch, macOS may ask you to confirm opening an app from the internet. Click "Open" in the dialog.
+```bash
+APP_ZIP="$HOME/Downloads/Nausilus_tester_0.0.2_aarch64.app.zip"
+APP_SRC="$HOME/Downloads/Nausilus.app"
+TMP_DIR="$(mktemp -d)"
+
+if [ -f "$APP_ZIP" ]; then
+  ditto -x -k "$APP_ZIP" "$TMP_DIR"
+  APP_SRC="$TMP_DIR/Nausilus.app"
+fi
+
+if [ ! -d "$APP_SRC" ]; then
+  echo "Could not find Nausilus.app or Nausilus_tester_0.0.2_aarch64.app.zip in Downloads."
+  exit 1
+fi
+
+sudo ditto "$APP_SRC" "/Applications/Nausilus.app"
+xattr -dr com.apple.quarantine "/Applications/Nausilus.app"
+open "/Applications/Nausilus.app"
+```
 
 ## How to Use
 
