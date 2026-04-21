@@ -56,7 +56,7 @@ open "/Applications/Nausilus.app"
 
 Inspired by **Denki Kurage** ("Electric Jellyfish") — a popular ESP32 animation project for the Cheap Yellow Display (CYD). This macOS port brings the same meditative jellyfish animation to the desktop.
 
-- Original Denki Kurage project: [https://github.com/joeycast/The-Complete-Guide-for-CYD-with-Arduino/tree/main/denki-kurage](https://github.com/joeycast/The-Complete-Guide-for-CYD-with-Arduino/tree/main/denki-kurage)
+- Original Denki Kurage project: https://github.com/likeablob/denki-kurage
 
 ## License
 
