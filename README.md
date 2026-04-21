@@ -2,6 +2,14 @@
 
 **Nausilus** is a lightweight macOS desktop companion app featuring a gently pulsing jellyfish that floats at the center of its window.
 
+> **Current download:** [Nausilus tester v0.0.2](https://github.com/TheCountOfSaintGermain/nausilus/releases/tag/tester-v0.0.2)
+>
+> This is the current working Mac tester build for trusted users.
+> It is unsigned and not notarized.
+> If macOS blocks it with a damaged warning, move the app to /Applications and run:
+>
+>     xattr -dr com.apple.quarantine "/Applications/Nausilus.app"
+
 ## Download & Getting Started
 
 **macOS (pre-built):**
