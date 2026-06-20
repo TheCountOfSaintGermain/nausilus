@@ -1,0 +1,5 @@
+# Nausilus tester-v0.0.2 checksums
+# Release: https://github.com/TheCountOfSaintGermain/nausilus/releases/tag/tester-v0.0.2
+# Verified locally with: shasum -a 256 Nausilus_tester_0.0.2_aarch64.app.zip
+
+cbdcb9394b7ea835a9f11be8c48b201af83d9d1b5ed5075492cf5d8f32239cf2  Nausilus_tester_0.0.2_aarch64.app.zip
