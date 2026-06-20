@@ -3,6 +3,7 @@ import { renderUpstreamAnimatedFrame } from './denki_upstream_static/render.js';
 import { ColorMode } from './denki_upstream_static/types.js';
 
 const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+type InteractionAction = 'turn-left' | 'turn-right' | 'cycle-color' | 'toggle-wireframe';
 
 // Prevent browser context menu on right-click
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -23,7 +24,12 @@ let wireframe: boolean = true;
 let showDebug: boolean = false;
 
 let activePointerId: number | null = null;
-let currentAction: 'turn-left' | 'turn-right' | 'cycle-color' | 'toggle-wireframe' | 'toggle-debug' | null = null;
+
+function syncCanvasState(): void {
+  canvas.dataset.colorMode = String(ColorMode[colorMode]).toLowerCase();
+  canvas.dataset.wireframe = String(wireframe);
+  canvas.dataset.debug = String(showDebug);
+}
 
 function getCanvasCoords(e: PointerEvent): { x: number; y: number } {
   const rect = canvas.getBoundingClientRect();
@@ -35,7 +41,7 @@ function getCanvasCoords(e: PointerEvent): { x: number; y: number } {
   };
 }
 
-function getInteractionAction(e: PointerEvent): typeof currentAction {
+function getInteractionAction(e: PointerEvent): InteractionAction | null {
   const { x, y } = getCanvasCoords(e);
   const MID_BAND_TOP = 80;
   const MID_BAND_BOTTOM = 240;
@@ -54,11 +60,6 @@ function getInteractionAction(e: PointerEvent): typeof currentAction {
     return 'toggle-wireframe';
   }
 
-  // Bottom-right zone — toggle debug overlay
-  if (x > canvas.width - TOP_RIGHT_SIZE && y > canvas.height - TOP_RIGHT_SIZE) {
-    return 'toggle-debug';
-  }
-
   if (y >= MID_BAND_TOP && y <= MID_BAND_BOTTOM) {
     return x < canvas.width / 2 ? 'turn-left' : 'turn-right';
   }
@@ -74,7 +75,6 @@ canvas.addEventListener('pointerdown', (e: PointerEvent) => {
   if (action === null) return;
 
   activePointerId = e.pointerId;
-  currentAction = action;
   canvas.setPointerCapture(e.pointerId);
 
   if (action === 'turn-right') {
@@ -83,10 +83,19 @@ canvas.addEventListener('pointerdown', (e: PointerEvent) => {
     headingTurnDelta = -HEADING_TURN_RATE;
   } else if (action === 'cycle-color') {
     colorMode = (colorMode + 1) % ColorMode.NUM_MODES;
+    syncCanvasState();
   } else if (action === 'toggle-wireframe') {
     wireframe = !wireframe;
-  } else if (action === 'toggle-debug') {
+    syncCanvasState();
+  }
+});
+
+window.addEventListener('keydown', (e: KeyboardEvent) => {
+  if (e.repeat) return;
+
+  if (e.key.toLowerCase() === 'd' && e.shiftKey) {
     showDebug = !showDebug;
+    syncCanvasState();
   }
 });
 
@@ -94,7 +103,6 @@ canvas.addEventListener('pointermove', (e: PointerEvent) => {
   if (activePointerId !== e.pointerId) return;
 
   const action = getInteractionAction(e);
-  currentAction = action;
 
   if (action === 'turn-right') {
     headingTurnDelta = HEADING_TURN_RATE;
@@ -102,14 +110,12 @@ canvas.addEventListener('pointermove', (e: PointerEvent) => {
     headingTurnDelta = -HEADING_TURN_RATE;
   } else {
     headingTurnDelta = 0;
-    currentAction = null;
   }
 });
 
 canvas.addEventListener('pointerup', (e: PointerEvent) => {
   if (activePointerId === e.pointerId) {
     activePointerId = null;
-    currentAction = null;
     headingTurnDelta = 0;
   }
 });
@@ -117,7 +123,6 @@ canvas.addEventListener('pointerup', (e: PointerEvent) => {
 canvas.addEventListener('pointercancel', (e: PointerEvent) => {
   if (activePointerId === e.pointerId) {
     activePointerId = null;
-    currentAction = null;
     headingTurnDelta = 0;
   }
 });
@@ -136,7 +141,6 @@ function frame(ts: number): void {
     colorMode,
     wireframe,
     showDebug,
-    0,
     accumulatedHeading,
   );
 
@@ -167,5 +171,6 @@ function resizeCanvas(): void {
 
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
+syncCanvasState();
 
 requestAnimationFrame(frame);

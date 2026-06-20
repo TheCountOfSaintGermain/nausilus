@@ -48,7 +48,6 @@ function drawDebugOverlay(
   ctx: CanvasRenderingContext2D,
   t: number,
   wireframe: boolean,
-  interactionBias: number,
   headingAccum: number,
 ): void {
   // FPS — compute from frame delta, clamp resume jumps
@@ -116,7 +115,6 @@ function drawDebugOverlay(
     `FPS: ${fps}`,
     `MODE: ${wireframe ? 'Wire' : 'Solid'}`,
     `YAW: ${yawDeg}`,
-    `Y_OFF: ${interactionBias.toFixed(0)}`,
   ];
   lines.forEach((line, i) => {
     ctx.fillText(line, 4, H - 60 + i * 9);
@@ -132,7 +130,6 @@ export function renderUpstreamAnimatedFrame(
   colorMode: ColorMode = FROZEN_COLOR_MODE,
   wireframe: boolean = FROZEN_WIREFRAME,
   showDebug: boolean = false,
-  interactionBias: number = 0,
   headingAccum: number = 0,
 ): void {
   const ctx = canvas.getContext('2d')!;
@@ -241,10 +238,9 @@ export function renderUpstreamAnimatedFrame(
   const globalZOffset = Math.sin(phase * 0.1) * 45.0;
 
   // Jellyfish stays centered with gentle bob (vertical oscillation)
-  // interactionBias: negative = up, positive = down — additive vertical shift while held
   const bob = Math.sin(t * 0.45) * 8.0;
   const gx = globalXOffset;
-  const gy = -95 + bob + interactionBias;
+  const gy = -95 + bob;
   const gz = globalZOffset;
 
   // Bell expansion/contraction pulse — amplitude reduced from 0.25 (too exaggerated)
@@ -266,6 +262,6 @@ export function renderUpstreamAnimatedFrame(
   drawJellyfish(ctx, bell2d, tentacles2d, colorMode, wireframe);
 
   if (showDebug) {
-    drawDebugOverlay(ctx, t, wireframe, interactionBias, headingAccum);
+    drawDebugOverlay(ctx, t, wireframe, headingAccum);
   }
 }

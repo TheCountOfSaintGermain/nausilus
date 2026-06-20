@@ -3,14 +3,13 @@
 ## Denki Kurage
 
 **Upstream repo**: https://github.com/likeablob/denki-kurage
-**Local clone**: `third_party/denki-kurage/`
-**Checked-out commit**: `62b3fc1714d439572a88b746e0e41ee74c65887a`
+**Last referenced upstream commit**: `62b3fc1714d439572a88b746e0e41ee74c65887a`
 **Branch**: `main`
 
-This clone is the canonical source of truth for all future Denki Kurage extraction work.
-It is read-only. No upstream files have been modified.
+This repository does not vendor the full Denki Kurage source tree.
+Use the upstream repository as the canonical source of truth for future extraction or comparison work.
 
-**Upstream structure**:
+Expected upstream structure:
 ```
 third_party/denki-kurage/
 ├── src/              # firmware source (jellyfish.cpp/h, math_3d.cpp/h, main.cpp, etc.)
@@ -23,4 +22,5 @@ third_party/denki-kurage/
 └── assets/           # images/video
 ```
 
-No extraction or porting work has begun. The next step is source-faithful extraction from `src/` into the project.
+The current Nausilus renderer already contains adapted TypeScript code under `src/denki_upstream_static/`.
+Keep upstream attribution and license notices current when changing that code.
