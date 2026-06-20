@@ -24,7 +24,7 @@ Use the release notes for tester install instructions.
 
 Prerequisites:
 
-- Node.js 20+
+- Node.js 20.19+ or 22.12+
 - Rust toolchain
 - Tauri prerequisites for macOS development
 
