@@ -1,6 +1,6 @@
 [package]
 name = "nausilus"
-version = "0.0.1"
+version = "0.0.2"
 description = "Nausilus desktop pet"
 authors = ["TheCountOfSaintGermain"]
 license = "MIT"

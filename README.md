@@ -1,12 +1,18 @@
 # Nausilus
 
+![CI](https://github.com/TheCountOfSaintGermain/nausilus/actions/workflows/ci.yml/badge.svg)
+
 Nausilus is a lightweight macOS desktop companion app featuring a gently pulsing jellyfish animation.
 
 The current renderer is a desktop TypeScript/Tauri adaptation of ideas and geometry from [Denki Kurage](https://github.com/likeablob/denki-kurage), an ESP32/CYD jellyfish animation project by likeablob.
 
+![Nausilus jellyfish animation](docs/nausilus-screenshot.png)
+
 ## Status
 
-Nausilus is early tester software. The current published tester build is unsigned and not notarized, so it is intended for trusted testers rather than broad public installation.
+Nausilus is early tester software. The source is MIT licensed and public, but the current downloadable tester build is unsigned and not notarized, so it is intended for trusted testers rather than broad public installation.
+
+Current source/app version: `0.0.2`
 
 Current tester build:
 
@@ -46,13 +52,16 @@ Run the Tauri app locally:
 npx tauri dev
 ```
 
-## How to Use
+## Controls
 
-- The jellyfish animates continuously in the center of the window
-- Resize the window freely; the canvas stays centered and scales within the bounds
-- Click or tap the center to cycle colors
-- Use the top-right zone to toggle wireframe mode
-- Use the bottom-right zone to toggle the debug overlay
+| Action | Result |
+| --- | --- |
+| Click or tap the jellyfish | Cycle color modes |
+| Hold the left or right side | Gently turn the jellyfish |
+| Click or tap the top-right corner | Toggle wireframe rendering |
+| Press `Shift+D` | Toggle the development debug overlay |
+
+The jellyfish animates continuously in the center of the window. The window can be resized; the canvas stays centered and scales within the app bounds.
 
 ## Features
 
@@ -66,6 +75,7 @@ npx tauri dev
 - The app currently ships one visual mode: the jellyfish renderer
 - Placeholder creature-mode scaffolding has been removed until there is a real second mode worth maintaining
 - Resize limits prevent the window from becoming too small to see the animation or impractically large
+- The current tester build is Apple Silicon only
 - No system tray integration in this version
 
 ## Credits
