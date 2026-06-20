@@ -1611,15 +1611,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "jellyfish"
-version = "0.0.1"
-dependencies = [
- "tauri",
- "tauri-build",
- "tauri-plugin-shell",
-]
-
-[[package]]
 name = "jni"
 version = "0.21.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1905,6 +1896,15 @@ dependencies = [
  "serde",
  "thiserror 2.0.18",
  "windows-sys 0.60.2",
+]
+
+[[package]]
+name = "nausilus"
+version = "0.0.1"
+dependencies = [
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-shell",
 ]
 
 [[package]]

@@ -1,63 +1,83 @@
 # Nausilus
 
-**Nausilus** is a lightweight macOS desktop companion app featuring a gently pulsing jellyfish that floats at the center of its window.
+Nausilus is a lightweight macOS desktop companion app featuring a gently pulsing jellyfish animation.
 
-> **Current download:** [Nausilus tester v0.0.2](https://github.com/TheCountOfSaintGermain/nausilus/releases/tag/tester-v0.0.2)
->
-> This is the current working Mac tester build for trusted users.
-> It is unsigned and not notarized.
+The current renderer is a desktop TypeScript/Tauri adaptation of ideas and geometry from [Denki Kurage](https://github.com/likeablob/denki-kurage), an ESP32/CYD jellyfish animation project by likeablob.
 
-## Install on macOS
+## Status
 
-1. Download `Nausilus_tester_0.0.2_aarch64.app.zip`
-2. Open **Terminal**
-3. Run this exact block:
+Nausilus is early tester software. The current published tester build is unsigned and not notarized, so it is intended for trusted testers rather than broad public installation.
+
+Current tester build:
+
+- [Nausilus tester v0.0.2](https://github.com/TheCountOfSaintGermain/nausilus/releases/tag/tester-v0.0.2)
+
+Use the release notes for tester install instructions.
+
+## Local Development
+
+Prerequisites:
+
+- Node.js 20+
+- Rust toolchain
+- Tauri prerequisites for macOS development
+
+Install dependencies:
 
 ```bash
-APP_ZIP="$HOME/Downloads/Nausilus_tester_0.0.2_aarch64.app.zip"
-APP_SRC="$HOME/Downloads/Nausilus.app"
-TMP_DIR="$(mktemp -d)"
+npm install
+```
 
-if [ -f "$APP_ZIP" ]; then
-  ditto -x -k "$APP_ZIP" "$TMP_DIR"
-  APP_SRC="$TMP_DIR/Nausilus.app"
-fi
+Run the Vite frontend:
 
-if [ ! -d "$APP_SRC" ]; then
-  echo "Could not find Nausilus.app or Nausilus_tester_0.0.2_aarch64.app.zip in Downloads."
-  exit 1
-fi
+```bash
+npm run dev
+```
 
-sudo ditto "$APP_SRC" "/Applications/Nausilus.app"
-xattr -dr com.apple.quarantine "/Applications/Nausilus.app"
-open "/Applications/Nausilus.app"
+Build the frontend:
+
+```bash
+npm run build
+```
+
+Run the Tauri app locally:
+
+```bash
+npx tauri dev
 ```
 
 ## How to Use
 
 - The jellyfish animates continuously in the center of the window
-- Resize the window freely — the jellyfish stays centered and scales within the bounds
-- The animation runs at minimal CPU usage, suitable for leaving open as a live wallpaper substitute
+- Resize the window freely; the canvas stays centered and scales within the bounds
+- Click or tap the center to cycle colors
+- Use the top-right zone to toggle wireframe mode
+- Use the bottom-right zone to toggle the debug overlay
 
 ## Features
 
 - Smooth, continuously animated jellyfish with depth-shaded bell and tentacles
 - Centered layout with responsive resize
-- Color modes (day/night compatible rendering)
-- Standalone macOS app — no browser required
+- Color cycling and wireframe toggle
+- Standalone macOS app shell through Tauri
 
 ## Notes & Limitations
 
-- The app is a visual companion only — it does not interact with the mouse or keyboard
+- The app currently ships one visual mode: the jellyfish renderer
+- Placeholder creature-mode scaffolding has been removed until there is a real second mode worth maintaining
 - Resize limits prevent the window from becoming too small to see the animation or impractically large
 - No system tray integration in this version
 
-## Inspiration
+## Credits
 
-Inspired by **Denki Kurage** ("Electric Jellyfish") — a popular ESP32 animation project for the Cheap Yellow Display (CYD). This macOS port brings the same meditative jellyfish animation to the desktop.
+Nausilus credits and preserves attribution to:
 
-- Original Denki Kurage project: https://github.com/likeablob/denki-kurage
+- Denki Kurage by likeablob: https://github.com/likeablob/denki-kurage
+
+Portions of the renderer are adapted from MIT-licensed Denki Kurage source concepts. See `CREDITS.md` for the third-party notice.
 
 ## License
 
-License details to be determined. See the repository for more information.
+Nausilus does not yet have a project-level license file.
+
+Until a `LICENSE` file is added for the Nausilus code, treat this repository as source-visible but not licensed for reuse. The upstream Denki Kurage notice is preserved in `CREDITS.md`.
