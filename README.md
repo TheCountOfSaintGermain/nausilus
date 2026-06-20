@@ -78,6 +78,6 @@ Portions of the renderer are adapted from MIT-licensed Denki Kurage source conce
 
 ## License
 
-Nausilus does not yet have a project-level license file.
+Nausilus is released under the MIT License. See `LICENSE`.
 
-Until a `LICENSE` file is added for the Nausilus code, treat this repository as source-visible but not licensed for reuse. The upstream Denki Kurage notice is preserved in `CREDITS.md`.
+The upstream Denki Kurage notice is preserved in `CREDITS.md`.
