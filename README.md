@@ -2,23 +2,31 @@
 
 ![CI](https://github.com/TheCountOfSaintGermain/nausilus/actions/workflows/ci.yml/badge.svg)
 
-Nausilus is a lightweight macOS desktop companion app featuring a gently pulsing jellyfish animation.
+Nausilus is an open-source macOS desktop companion: a small Tauri app with a gently pulsing jellyfish renderer that can be built and inspected locally.
 
-The current renderer is a desktop TypeScript/Tauri adaptation of ideas and geometry from [Denki Kurage](https://github.com/likeablob/denki-kurage), an ESP32/CYD jellyfish animation project by likeablob.
+The repo is source-first. The downloadable tester build is available for trusted testers, but it is unsigned and not notarized. Treat the source and build instructions as the primary public artifact.
 
-![Nausilus jellyfish animation](docs/nausilus-screenshot.png)
+![Nausilus animated demo](docs/nausilus-demo.gif)
+
+[X-ready MP4 demo](docs/nausilus-demo.mp4) | [Desktop still](docs/nausilus-desktop-screenshot.png)
 
 ## Status
 
-Nausilus is early tester software. The source is MIT licensed and public, but the current downloadable tester build is unsigned and not notarized, so it is intended for trusted testers rather than broad public installation.
-
 Current source/app version: `0.0.2`
+
+Public posture:
+
+- Source code is MIT licensed and intended for review, local builds, and experimentation
+- Tester release is unsigned, not notarized, and Apple Silicon only
+- No paid Apple Developer ID signing is configured yet
+- The app currently ships one visual mode: the jellyfish renderer
 
 Current tester build:
 
 - [Nausilus tester v0.0.2](https://github.com/TheCountOfSaintGermain/nausilus/releases/tag/tester-v0.0.2)
+- [Tester checksum](docs/release-checksums/tester-v0.0.2-SHA256SUMS.txt)
 
-Use the release notes for tester install instructions.
+Use the release notes for tester install instructions. For public evaluation, building from source is the cleaner path.
 
 ## Local Development
 
@@ -31,7 +39,7 @@ Prerequisites:
 Install dependencies:
 
 ```bash
-npm install
+npm ci
 ```
 
 Run the Vite frontend:
@@ -52,6 +60,12 @@ Run the Tauri app locally:
 npx tauri dev
 ```
 
+Build an unsigned local app bundle:
+
+```bash
+npx tauri build --bundles app
+```
+
 ## Controls
 
 | Action | Result |
@@ -68,13 +82,26 @@ The jellyfish animates continuously in the center of the window. The window can 
 - Centered layout with responsive resize
 - Color cycling and wireframe toggle
 - Standalone macOS app shell through Tauri
+- Manual GitHub Actions workflow for unsigned macOS build artifacts
+
+## For AI Agents
+
+Good entry points:
+
+- `README.md` for current public posture and local build commands
+- `docs/architecture.md` for the project structure and renderer flow
+- `CREDITS.md` for upstream attribution requirements
+- `.github/workflows/ci.yml` for the required verification baseline
+
+Do not add signing, notarization, release publishing, or credential-dependent automation without explicit maintainer approval.
 
 ## Notes & Limitations
 
-- The app currently ships one visual mode: the jellyfish renderer
-- Resize limits prevent the window from becoming too small to see the animation or impractically large
+- The tester build is not a production-quality macOS distribution package
+- Gatekeeper friction is expected until a paid Apple Developer ID signing path exists
 - The current tester build is Apple Silicon only
 - No system tray integration in this version
+- No auto-updater in this version
 
 ## Credits
 

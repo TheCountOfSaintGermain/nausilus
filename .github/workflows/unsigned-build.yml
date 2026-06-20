@@ -1,0 +1,54 @@
+name: Unsigned Build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  macos-app:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20.19.0
+          cache: npm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit dependencies
+        run: npm audit
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Check Tauri app
+        run: cargo check --manifest-path src-tauri/Cargo.toml
+
+      - name: Build unsigned app bundle
+        run: npx tauri build --bundles app
+
+      - name: Package unsigned app artifact
+        run: |
+          mkdir -p artifacts
+          ZIP_NAME="Nausilus-unsigned-${GITHUB_SHA}.app.zip"
+          ditto -c -k --keepParent \
+            src-tauri/target/release/bundle/macos/Nausilus.app \
+            "artifacts/${ZIP_NAME}"
+          (cd artifacts && shasum -a 256 "${ZIP_NAME}" > SHA256SUMS.txt)
+          cat artifacts/SHA256SUMS.txt
+
+      - name: Upload unsigned app artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: nausilus-unsigned-macos-${{ github.sha }}
+          path: artifacts/
+          retention-days: 14

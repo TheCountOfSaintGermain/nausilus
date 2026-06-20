@@ -10,6 +10,8 @@
 - Aligned app, npm, Cargo, and Tauri metadata to `0.0.2`.
 - Fixed the release workflow Rust setup action so future signed release tags can reach the packaging step.
 - Removed generated schema files, unused multi-platform icon artifacts, and the development debug overlay from the tracked public surface.
+- Repositioned the repo as source-first, with unsigned tester builds clearly labeled as trusted-tester artifacts.
+- Added README demo media, a desktop still, release checksums, lightweight architecture/security/contributing docs, CI dependency auditing, and a manual unsigned build artifact workflow.
 
 ## tester-v0.0.2 - 2026-04-21
 
