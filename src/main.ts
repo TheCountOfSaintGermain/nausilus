@@ -20,15 +20,11 @@ let colorMode: ColorMode = ColorMode.CYAN;
 // Wireframe toggle state
 let wireframe: boolean = true;
 
-// Debug overlay state
-let showDebug: boolean = false;
-
 let activePointerId: number | null = null;
 
 function syncCanvasState(): void {
   canvas.dataset.colorMode = String(ColorMode[colorMode]).toLowerCase();
   canvas.dataset.wireframe = String(wireframe);
-  canvas.dataset.debug = String(showDebug);
 }
 
 function getCanvasCoords(e: PointerEvent): { x: number; y: number } {
@@ -90,15 +86,6 @@ canvas.addEventListener('pointerdown', (e: PointerEvent) => {
   }
 });
 
-window.addEventListener('keydown', (e: KeyboardEvent) => {
-  if (e.repeat) return;
-
-  if (e.key.toLowerCase() === 'd' && e.shiftKey) {
-    showDebug = !showDebug;
-    syncCanvasState();
-  }
-});
-
 canvas.addEventListener('pointermove', (e: PointerEvent) => {
   if (activePointerId !== e.pointerId) return;
 
@@ -140,7 +127,6 @@ function frame(ts: number): void {
     t,
     colorMode,
     wireframe,
-    showDebug,
     accumulatedHeading,
   );
 

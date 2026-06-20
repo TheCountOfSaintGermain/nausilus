@@ -41,87 +41,6 @@ function initParticles(): void {
 // Initialize on first use
 let particlesInitialized = false;
 let lastT = -1;  // previous frame timestamp for deltaPhase computation
-let lastDebugT = -1;  // previous frame timestamp for FPS computation
-
-// ─── Debug overlay ─────────────────────────────────────────────
-function drawDebugOverlay(
-  ctx: CanvasRenderingContext2D,
-  t: number,
-  wireframe: boolean,
-  headingAccum: number,
-): void {
-  // FPS — compute from frame delta, clamp resume jumps
-  let fps = 60;
-  if (lastDebugT > 0) {
-    let dt = (t - lastDebugT) * 1000;  // ms
-    if (dt > 500) dt = 500;  // clamp tab-switch resume
-    if (dt > 0) fps = Math.round(1000 / dt);
-  }
-  lastDebugT = t;
-
-  const W = SCREEN_WIDTH;
-  const H = SCREEN_HEIGHT;
-  const ZONE = 45;         // top/bottom strip height (matches upstream)
-  const CORNER = 40;       // right-edge corner strip width (matches upstream)
-  const MID_LEFT = 80;     // middle vertical divider left (matches upstream)
-  const MID_RIGHT = 160;   // middle vertical divider right (matches upstream)
-  const STEP = 4;          // dotted-line step (matches upstream)
-
-  ctx.save();
-  ctx.strokeStyle = '#FFE000';  // TFT_YELLOW equivalent
-  ctx.fillStyle = '#FFE000';
-  ctx.lineWidth = 0.5;
-
-  // Horizontal dividers — top and bottom bands (dotted)
-  for (let x = 0; x < W; x += STEP) {
-    ctx.fillRect(x, ZONE, 1, 1);
-    ctx.fillRect(x, H - ZONE, 1, 1);
-  }
-
-  // Vertical dividers — middle section (dotted)
-  for (let y = ZONE; y < H - ZONE; y += STEP) {
-    ctx.fillRect(MID_LEFT, y, 1, 1);
-    ctx.fillRect(MID_RIGHT, y, 1, 1);
-  }
-
-  // Corner square vertical dividers — top-right strip
-  for (let y = 0; y < ZONE; y += STEP) {
-    ctx.fillRect(W - CORNER, y, 1, 1);
-  }
-
-  // Corner square vertical dividers — bottom-right strip
-  for (let y = H - ZONE; y < H; y += STEP) {
-    ctx.fillRect(W - CORNER, y, 1, 1);
-  }
-
-  // Region labels — centered in each zone
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.font = '6px monospace';
-  ctx.fillText('T', 120, 22);    // top-center
-  ctx.fillText('TR', 220, 22);   // top-right
-  ctx.fillText('ML', 40, 160);   // middle-left
-  ctx.fillText('MC', 120, 160);  // middle-center
-  ctx.fillText('MR', 200, 160);  // middle-right
-  ctx.fillText('B', 120, 297);   // bottom-center
-  ctx.fillText('BR', 220, 297);  // bottom-right
-
-  // Stats block — bottom-left
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'top';
-  ctx.font = '7px monospace';
-  const yawDeg = ((headingAccum * 180 / Math.PI) % 360).toFixed(1);
-  const lines = [
-    `FPS: ${fps}`,
-    `MODE: ${wireframe ? 'Wire' : 'Solid'}`,
-    `YAW: ${yawDeg}`,
-  ];
-  lines.forEach((line, i) => {
-    ctx.fillText(line, 4, H - 60 + i * 9);
-  });
-
-  ctx.restore();
-}
 
 // ─── Animated variant (same geometry, time-driven params) ───
 export function renderUpstreamAnimatedFrame(
@@ -129,7 +48,6 @@ export function renderUpstreamAnimatedFrame(
   t: number,
   colorMode: ColorMode = FROZEN_COLOR_MODE,
   wireframe: boolean = FROZEN_WIREFRAME,
-  showDebug: boolean = false,
   headingAccum: number = 0,
 ): void {
   const ctx = canvas.getContext('2d')!;
@@ -260,8 +178,4 @@ export function renderUpstreamAnimatedFrame(
 
   buildJellyfishGeometry(bell2d, tentacles2d, phase, gx, gy, gz, expansion);
   drawJellyfish(ctx, bell2d, tentacles2d, colorMode, wireframe);
-
-  if (showDebug) {
-    drawDebugOverlay(ctx, t, wireframe, headingAccum);
-  }
 }

@@ -1,6 +1,7 @@
 node_modules/
 dist/
 target/
+src-tauri/gen/
 *.canvas
 *.base
 .DS_Store

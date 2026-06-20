@@ -59,7 +59,6 @@ npx tauri dev
 | Click or tap the jellyfish | Cycle color modes |
 | Hold the left or right side | Gently turn the jellyfish |
 | Click or tap the top-right corner | Toggle wireframe rendering |
-| Press `Shift+D` | Toggle the development debug overlay |
 
 The jellyfish animates continuously in the center of the window. The window can be resized; the canvas stays centered and scales within the app bounds.
 
@@ -73,7 +72,6 @@ The jellyfish animates continuously in the center of the window. The window can 
 ## Notes & Limitations
 
 - The app currently ships one visual mode: the jellyfish renderer
-- Placeholder creature-mode scaffolding has been removed until there is a real second mode worth maintaining
 - Resize limits prevent the window from becoming too small to see the animation or impractically large
 - The current tester build is Apple Silicon only
 - No system tray integration in this version
