@@ -3,6 +3,7 @@ import { renderUpstreamAnimatedFrame } from './denki_upstream_static/render.js';
 import { ColorMode } from './denki_upstream_static/types.js';
 
 const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+type InteractionAction = 'turn-left' | 'turn-right' | 'cycle-color' | 'toggle-wireframe' | 'toggle-debug';
 
 // Prevent browser context menu on right-click
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -23,7 +24,6 @@ let wireframe: boolean = true;
 let showDebug: boolean = false;
 
 let activePointerId: number | null = null;
-let currentAction: 'turn-left' | 'turn-right' | 'cycle-color' | 'toggle-wireframe' | 'toggle-debug' | null = null;
 
 function getCanvasCoords(e: PointerEvent): { x: number; y: number } {
   const rect = canvas.getBoundingClientRect();
@@ -35,7 +35,7 @@ function getCanvasCoords(e: PointerEvent): { x: number; y: number } {
   };
 }
 
-function getInteractionAction(e: PointerEvent): typeof currentAction {
+function getInteractionAction(e: PointerEvent): InteractionAction | null {
   const { x, y } = getCanvasCoords(e);
   const MID_BAND_TOP = 80;
   const MID_BAND_BOTTOM = 240;
@@ -74,7 +74,6 @@ canvas.addEventListener('pointerdown', (e: PointerEvent) => {
   if (action === null) return;
 
   activePointerId = e.pointerId;
-  currentAction = action;
   canvas.setPointerCapture(e.pointerId);
 
   if (action === 'turn-right') {
@@ -94,7 +93,6 @@ canvas.addEventListener('pointermove', (e: PointerEvent) => {
   if (activePointerId !== e.pointerId) return;
 
   const action = getInteractionAction(e);
-  currentAction = action;
 
   if (action === 'turn-right') {
     headingTurnDelta = HEADING_TURN_RATE;
@@ -102,14 +100,12 @@ canvas.addEventListener('pointermove', (e: PointerEvent) => {
     headingTurnDelta = -HEADING_TURN_RATE;
   } else {
     headingTurnDelta = 0;
-    currentAction = null;
   }
 });
 
 canvas.addEventListener('pointerup', (e: PointerEvent) => {
   if (activePointerId === e.pointerId) {
     activePointerId = null;
-    currentAction = null;
     headingTurnDelta = 0;
   }
 });
@@ -117,7 +113,6 @@ canvas.addEventListener('pointerup', (e: PointerEvent) => {
 canvas.addEventListener('pointercancel', (e: PointerEvent) => {
   if (activePointerId === e.pointerId) {
     activePointerId = null;
-    currentAction = null;
     headingTurnDelta = 0;
   }
 });
@@ -136,7 +131,6 @@ function frame(ts: number): void {
     colorMode,
     wireframe,
     showDebug,
-    0,
     accumulatedHeading,
   );
 
